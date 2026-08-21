@@ -1,0 +1,4 @@
+kafka-python-ng==2.2.3
+reportlab==4.4.3
+minio==7.2.5
+psycopg2-binary==2.9.10
