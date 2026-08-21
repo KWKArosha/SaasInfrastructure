@@ -24,13 +24,13 @@ public class PdfJobConsumer {
             topics = JobProducer.PDF_JOBS_TOPIC,
             groupId = "pdf-job-workers",
             containerFactory = "kafkaListenerContainerFactory")
-    public void consume(@Payload Map<String, Object> payload,
+    public void consumePdf(@Payload Map<String, Object> payload,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key,
                         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String jobId = String.valueOf(payload.get("jobId"));
         String userId = String.valueOf(payload.get("userId"));
         String jobType = String.valueOf(payload.get("jobType"));
-        log.info("Received job event for jobId={}, userId={}, jobType={}, topic={}", jobId, userId, jobType, topic);
+        log.info("Received PDF job event for jobId={}, userId={}, jobType={}, topic={}", jobId, userId, jobType, topic);
 
         try {
             jobService.markProcessing(jobId);
@@ -40,12 +40,41 @@ public class PdfJobConsumer {
                     jobService.markCompleted(jobId, outputLocation);
                     log.info("Completed PDF job {} stored at {}", jobId, outputLocation);
                 } else {
-                    throw new IllegalArgumentException("Unsupported job type: " + jobType);
+                    throw new IllegalArgumentException("Unsupported job type for PDF worker: " + jobType);
                 }
             }, () -> log.warn("No job found for jobId={}", jobId));
         } catch (Exception ex) {
             jobService.markFailed(jobId, ex.getMessage());
-            log.error("Failed processing jobId={}", jobId, ex);
+            log.error("Failed processing PDF jobId={}", jobId, ex);
+        }
+    }
+
+    @KafkaListener(
+            topics = JobProducer.BARCODE_JOBS_TOPIC,
+            groupId = "barcode-job-workers",
+            containerFactory = "kafkaListenerContainerFactory")
+    public void consumeBarcode(@Payload Map<String, Object> payload,
+                              @Header(KafkaHeaders.RECEIVED_KEY) String key,
+                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        String jobId = String.valueOf(payload.get("jobId"));
+        String userId = String.valueOf(payload.get("userId"));
+        String jobType = String.valueOf(payload.get("jobType"));
+        log.info("Received barcode job event for jobId={}, userId={}, jobType={}, topic={}", jobId, userId, jobType, topic);
+
+        try {
+            jobService.markProcessing(jobId);
+            jobService.findByJobId(jobId).ifPresentOrElse(job -> {
+                if ("BARCODE_GENERATOR".equalsIgnoreCase(job.getJobType())) {
+                    String outputLocation = "minio://pdf-bucket/" + jobId + ".png";
+                    jobService.markCompleted(jobId, outputLocation);
+                    log.info("Completed barcode job {} stored at {}", jobId, outputLocation);
+                } else {
+                    throw new IllegalArgumentException("Unsupported job type for barcode worker: " + jobType);
+                }
+            }, () -> log.warn("No job found for jobId={}", jobId));
+        } catch (Exception ex) {
+            jobService.markFailed(jobId, ex.getMessage());
+            log.error("Failed processing barcode jobId={}", jobId, ex);
         }
     }
 }

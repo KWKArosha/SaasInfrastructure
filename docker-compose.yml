@@ -72,6 +72,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SERVER_PORT: 8080
       MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_ENDPOINT: http://localhost:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: pdf-bucket
@@ -108,6 +109,27 @@ services:
       KAFKA_INPUT_TOPIC: pdf-jobs
       KAFKA_OUTPUT_TOPIC: pdf-completed
       KAFKA_GROUP_ID: txttopdf-worker-group
+      KAFKA_JOB_DB_URL: jdbc:postgresql://postgres:5432/saas_db
+      KAFKA_JOB_DB_USER: saas_user
+      KAFKA_JOB_DB_PASSWORD: saas_pass
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: pdf-bucket
+    volumes:
+      - ./output:/output
+
+  barcodegen:
+    build: ./barcodegen
+    container_name: saas-barcodegen
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_INPUT_TOPIC: barcode-jobs
+      KAFKA_OUTPUT_TOPIC: barcode-completed
+      KAFKA_GROUP_ID: barcode-worker-group
       KAFKA_JOB_DB_URL: jdbc:postgresql://postgres:5432/saas_db
       KAFKA_JOB_DB_USER: saas_user
       KAFKA_JOB_DB_PASSWORD: saas_pass

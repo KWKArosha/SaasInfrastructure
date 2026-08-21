@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,11 +66,27 @@ public class JobController {
         }
 
         String objectName = outputLocation.replace("minio://" + minioService.getBucket() + "/", "");
-        String downloadUrl = minioService.presignedDownloadUrl(objectName, 600);
+        String downloadUrl = "/api/jobs/" + jobId + "/file";
         return ResponseEntity.ok(Map.of(
                 "url", downloadUrl,
                 "fileName", objectName,
                 "jobId", jobId));
+    }
+
+    @GetMapping("/jobs/{jobId}/file")
+    public ResponseEntity<Resource> file(@PathVariable String jobId) {
+        Optional<Job> job = jobService.findByJobId(jobId);
+        if (job.isEmpty() || job.get().getOutputLocation() == null || job.get().getOutputLocation().isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String objectName = job.get().getOutputLocation().replace("minio://" + minioService.getBucket() + "/", "");
+        String contentType = objectName.endsWith(".png") ? "image/png" : "application/pdf";
+        Resource resource = new InputStreamResource(minioService.getObject(objectName));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header("Content-Disposition", "attachment; filename=\"" + objectName + "\"")
+                .body(resource);
     }
 
     @GetMapping("/jobs/{jobId}")

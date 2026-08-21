@@ -1,0 +1,5 @@
+kafka-python-ng==2.2.3
+minio==7.2.5
+psycopg2-binary==2.9.10
+python-barcode==0.15.1
+Pillow==11.0.0

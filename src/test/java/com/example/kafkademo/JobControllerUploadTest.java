@@ -25,6 +25,9 @@ class JobControllerUploadTest {
     @MockBean
     private JobService jobService;
 
+    @MockBean
+    private MinioService minioService;
+
     @Test
     void uploadTextFileCreatesJob() throws Exception {
         JobResponse response = new JobResponse(

@@ -1,8 +1,8 @@
 package com.example.kafkademo;
 
-import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
-import java.util.concurrent.TimeUnit;
+import java.io.InputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,17 +28,15 @@ public class MinioService {
         return bucket;
     }
 
-    public String presignedDownloadUrl(String objectName, int seconds) {
+    public InputStream getObject(String objectName) {
         try {
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(io.minio.http.Method.GET)
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
                             .bucket(bucket)
                             .object(objectName)
-                            .expiry(seconds, TimeUnit.SECONDS)
                             .build());
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to generate presigned MinIO URL for object=" + objectName, e);
+            throw new IllegalStateException("Unable to read MinIO object=" + objectName, e);
         }
     }
 }

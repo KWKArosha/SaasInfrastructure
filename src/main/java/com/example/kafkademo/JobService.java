@@ -30,7 +30,7 @@ public class JobService {
         job.setCreatedAt(Instant.now());
         job = jobRepository.save(job);
 
-        jobProducer.publishPdfJob(job);
+        jobProducer.publishJob(job);
         return JobResponse.from(job);
     }
 

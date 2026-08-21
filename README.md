@@ -74,8 +74,11 @@ This is the simplest full-stack option. It runs PostgreSQL, Kafka, Kafka UI, Min
 From the `enterprise` directory:
 
 ```bash
+mvn -B -DskipTests package
 docker compose up -d --build
 ```
+
+The Maven command builds the API JAR that Docker copies into the API image. Run it again after changing backend code. Docker then rebuilds the API image without downloading Maven dependencies inside the container.
 
 Check that all containers are running:
 
